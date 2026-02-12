@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>手机颜色色差检测器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 10px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            flex-grow: 1;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-title i {
+            margin-right: 10px;
+            color: #3498db;
+        }
+        
+        .camera-container {
+            position: relative;
+            width: 100%;
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        #video {
+            width: 100%;
+            display: block;
+            border-radius: 12px;
+        }
+        
+        #canvas {
+            display: none;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn-capture {
+            background-color: #e74c3c;
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
+        }
+        
+        .btn-capture:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-reset {
+            background-color: #95a5a6;
+            box-shadow: 0 4px 10px rgba(149, 165, 166, 0.3);
+        }
+        
+        .btn-reset:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .color-selection-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .color-picker {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .color-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            margin-right: 15px;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-info {
+            flex-grow: 1;
+        }
+        
+        .color-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .color-hex {
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        
+        .comparison-result {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .difference-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+        
+        .difference-text {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            border-radius: 50px;
+            display: inline-block;
+            font-weight: 600;
+        }
+        
+        .status {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status i {
+            margin-right: 10px;
+        }
+        
+        .status-success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+        }
+        
+        .status-warning {
+            background-color: rgba(241, 196, 15, 0.2);
+            color: #f39c12;
+        }
+        
+        .status-error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #c0392b;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            border-radius: 0 10px 10px 0;
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px 0;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .color-samples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        
+        .sample-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        
+        .sample-color:hover {
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .controls {
+                gap: 10px;
+            }
+            
+            .difference-value {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .color-picker {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .color-preview {
+                width: 100%;
+                height: 80px;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-camera"></i> 手机颜色色差检测器</h1>
+            <p class="subtitle">使用手机摄像头拍摄照片，选择两种颜色进行色差对比</p>
+        </header>
+        
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-camera"></i> 摄像头</h2>
+            <div class="status status-warning" id="cameraStatus">
+                <i class="fas fa-exclamation-circle"></i> 请允许访问摄像头以开始使用
+            </div>
+            <div class="camera-container">
+                <video id="video" autoplay playsinline>您的浏览器不支持视频播放</video>
+                <canvas id="canvas"></canvas>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="startCamera">
+                    <i class="fas fa-video"></i> 开启摄像头
+                </button>
+                <button class="btn btn-capture" id="capture" disabled>
+                    <i class="fas fa-camera"></i> 拍照
+                </button>
+                <button class="btn btn-reset" id="reset" disabled>
+                    <i class="fas fa-redo"></i> 重新拍照
+                </button>
+            </div>
+            
+            <div class="instructions">
+                <h3>使用说明：</h3>
+                <ol>
+                    <li>点击"开启摄像头"按钮允许访问您的摄像头</li>
+                    <li>对准您想要检测颜色的物体</li>
+                    <li>点击"拍照"按钮拍摄照片</li>
+                    <li>点击照片上的两个位置选择要对比的颜色</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-palette"></i> 颜色选择</h2>
+            <p>点击下方照片选择两种颜色进行对比，或使用预设颜色：</p>
+            
+            <div class="color-samples">
+                <div class="sample-color" style="background-color: #FF3B30;" data-color="#FF3B30"></div>
+                <div class="sample-color" style="background-color: #FF9500;" data-color="#FF9500"></div>
+                <div class="sample-color" style="background-color: #FFCC00;" data-color="#FFCC00"></div>
+                <div class="sample-color" style="background-color: #34C759;" data-color="#34C759"></div>
+                <div class="sample-color" style="background-color: #007AFF;" data-color="#007AFF"></div>
+                <div class="sample-color" style="background-color: #5856D6;" data-color="#5856D6"></div>
+                <div class="sample-color" style="background-color: #AF52DE;" data-color="#AF52DE"></div>
+                <div class="sample-color" style="background-color: #FF2D55;" data-color="#FF2D55"></div>
+            </div>
+            
+            <div class="color-selection-area">
+                <div class="color-picker">
+                    <div class="color-preview" id="color1Preview" style="background-color: #3498db;"></div>
+                    <div class="color-info">
+                        <div class="color-name">颜色 1</div>
+                        <div class="color-hex" id="color1Hex">#3498db</div>
+                    </div>
+                </div>
+                
+                <div class="color-picker">
+                    <div class="color-preview" id="color2Preview" style="background-color: #e74c3c;"></div>
+                    <div class="color-info">
+                        <div class="color-name">颜色 2</div>
+                        <div class="color-hex" id="color2Hex">#e74c3c</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="compareColors" disabled>
+                    <i class="fas fa-balance-scale"></i> 对比颜色
+                </button>
+                <button class="btn btn-reset" id="resetColors">
+                    <i class="fas fa-eraser"></i> 重置颜色
+                </button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="card-title"><i class="fas fa-chart-bar"></i> 色差对比结果</h2>
+            <div class="comparison-result">
+                <p>颜色差异值 (ΔE)</p>
+                <div class="difference-value" id="differenceValue">0.0</div>
+                <div class="difference-text" id="differenceText">未开始对比</div>
+            </div>
+            
+            <div class="instructions">
+                <h3>色差判定标准 (ΔE 2000):</h3>
+                <ul>
+                    <li><strong>ΔE &lt; 1.0</strong>：人眼无法察觉差异</li>
+                    <li><strong>1.0 ≤ ΔE &lt; 2.0</strong>：专业设计师可察觉差异</li>
+                    <li><strong>2.0 ≤ ΔE &lt; 3.5</strong>：普通观察者可察觉差异</li>
+                    <li><strong>3.5 ≤ ΔE &lt; 5.0</strong>：明显颜色差异</li>
+                    <li><strong>ΔE ≥ 5.0</strong>：非常大差异，看起来是不同颜色</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>颜色色差检测器 &copy; 2023 | 使用手机摄像头进行颜色对比</p>
+    </footer>
+
+    <script>
+        // DOM 元素
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const startCameraBtn = document.getElementById('startCamera');
+        const captureBtn = document.getElementById('capture');
+        const resetBtn = document.getElementById('reset');
+        const compareColorsBtn = document.getElementById('compareColors');
+        const resetColorsBtn = document.getElementById('resetColors');
+        const cameraStatus = document.getElementById('cameraStatus');
+        const color1Preview = document.getElementById('color1Preview');
+        const color2Preview = document.getElementById('color2Preview');
+        const color1Hex = document.getElementById('color1Hex');
+        const color2Hex = document.getElementById('color2Hex');
+        const differenceValue = document.getElementById('differenceValue');
+        const differenceText = document.getElementById('differenceText');
+        const sampleColors = document.querySelectorAll('.sample-color');
+        
+        // 状态变量
+        let stream = null;
+        let isCameraActive = false;
+        let photoTaken = false;
+        let selectedColor1 = { r: 52, g: 152, b: 219 }; // 默认颜色1
+        let selectedColor2 = { r: 231, g: 76, b: 60 };  // 默认颜色2
+        let colorSelectionStep = 0; // 0: 未开始, 1: 已选颜色1, 2: 已选颜色2
+        
+        // 启动摄像头
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                // 请求摄像头权限
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // 使用后置摄像头
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                // 将视频流显示在video元素上
+                video.srcObject = stream;
+                isCameraActive = true;
+                
+                // 更新UI状态
+                startCameraBtn.disabled = true;
+                captureBtn.disabled = false;
+                cameraStatus.className = 'status status-success';
+                cameraStatus.innerHTML = '<i class="fas fa-check-circle"></i> 摄像头已开启，请点击"拍照"按钮拍摄照片';
+                
+            } catch (err) {
+                console.error('摄像头访问错误:', err);
+                cameraStatus.className = 'status status-error';
+                cameraStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 无法访问摄像头: ${err.message}`;
+            }
+        });
+        
+        // 拍照
+        captureBtn.addEventListener('click', () => {
+            if (!isCameraActive) return;
+            
+            // 设置canvas尺寸与视频一致
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // 将视频帧绘制到canvas上
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // 将canvas内容显示在video元素的位置
+            video.style.display = 'none';
+            canvas.style.display = 'block';
+            
+            // 更新状态
+            photoTaken = true;
+            captureBtn.disabled = true;
+            resetBtn.disabled = false;
+            compareColorsBtn.disabled = false;
+            colorSelectionStep = 0;
+            
+            // 添加点击事件监听，用于选择颜色
+            canvas.addEventListener('click', handleCanvasClick);
+            
+            // 更新状态信息
+            cameraStatus.className = 'status status-success';
+            cameraStatus.innerHTML = '<i class="fas fa-check-circle"></i> 照片已拍摄，请点击照片上的两个位置选择颜色';
+        });
+        
+        // 重新拍照
+        resetBtn.addEventListener('click', () => {
+            // 停止当前视频流
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // 重置显示
+            video.style.display = 'block';
+            canvas.style.display = 'none';
+            
+            // 重置状态
+            photoTaken = false;
+            isCameraActive = false;
+            startCameraBtn.disabled = false;
+            captureBtn.disabled = true;
+            resetBtn.disabled = true;
+            compareColorsBtn.disabled = true;
+            colorSelectionStep = 0;
+            
+            // 移除canvas点击事件
+            canvas.removeEventListener('click', handleCanvasClick);
+            
+            // 重新请求摄像头
+            startCameraBtn.click();
+        });
+        
+        // 处理canvas点击事件（选择颜色）
+        function handleCanvasClick(event) {
+            if (!photoTaken) return;
+            
+            // 获取点击位置
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // 获取该位置的颜色
+            const ctx = canvas.getContext('2d');
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const color = { r: pixel[0], g: pixel[1], b: pixel[2] };
+            
+            // 根据步骤选择颜色
+            if (colorSelectionStep === 0 || colorSelectionStep === 1) {
+                // 选择颜色1
+                selectedColor1 = color;
+                updateColorDisplay(1, color);
+                colorSelectionStep = 1;
+                
+                // 提示选择第二个颜色
+                cameraStatus.className = 'status status-warning';
+                cameraStatus.innerHTML = '<i class="fas fa-mouse-pointer"></i> 已选择颜色1，请点击选择颜色2';
+            } else {
+                // 选择颜色2
+                selectedColor2 = color;
+                updateColorDisplay(2, color);
+                colorSelectionStep = 2;
+                
+                // 提示可以对比颜色
+                cameraStatus.className = 'status status-success';
+                cameraStatus.innerHTML = '<i class="fas fa-check-circle"></i> 已选择颜色2，点击"对比颜色"按钮进行色差分析';
+            }
+        }
+        
+        // 更新颜色显示
+        function updateColorDisplay(colorNum, color) {
+            const hex = rgbToHex(color.r, color.g, color.b);
+            
+            if (colorNum === 1) {
+                color1Preview.style.backgroundColor = hex;
+                color1Hex.textContent = hex;
+            } else {
+                color2Preview.style.backgroundColor = hex;
+                color2Hex.textContent = hex;
+            }
+        }
+        
+        // RGB转十六进制
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+        }
+        
+        // 十六进制转RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+        
+        // 对比颜色
+        compareColorsBtn.addEventListener('click', () => {
+            // 计算色差
+            const deltaE = calculateColorDifference(selectedColor1, selectedColor2);
+            
+            // 显示结果
+            differenceValue.textContent = deltaE.toFixed(2);
+            
+            // 根据色差值显示不同的文本和颜色
+            let resultText = '';
+            let resultClass = '';
+            
+            if (deltaE < 1.0) {
+                resultText = '几乎无差异（人眼无法察觉）';
+                resultClass = 'status-success';
+            } else if (deltaE < 2.0) {
+                resultText = '微小差异（仅专家可察觉）';
+                resultClass = 'status-success';
+            } else if (deltaE < 3.5) {
+                resultText = '可察觉差异（仔细观察可见）';
+                resultClass = 'status-warning';
+            } else if (deltaE < 5.0) {
+                resultText = '明显差异（普通观察可见）';
+                resultClass = 'status-warning';
+            } else {
+                resultText = '非常大差异（完全不同颜色）';
+                resultClass = 'status-error';
+            }
+            
+            differenceText.textContent = resultText;
+            differenceText.className = 'difference-text ' + resultClass;
+        });
+        
+        // 计算色差（CIE76标准，简化版本）
+        function calculateColorDifference(color1, color2) {
+            // 将RGB转换为Lab颜色空间（简化版本）
+            const lab1 = rgbToLab(color1.r, color1.g, color1.b);
+            const lab2 = rgbToLab(color2.r, color2.g, color2.b);
+            
+            // 计算欧几里得距离（ΔE）
+            const deltaL = lab1.l - lab2.l;
+            const deltaA = lab1.a - lab2.a;
+            const deltaB = lab1.b - lab2.b;
+            
+            return Math.sqrt(deltaL * deltaL + deltaA * deltaA + deltaB * deltaB);
+        }
+        
+        // RGB转Lab颜色空间（简化版本）
+        function rgbToLab(r, g, b) {
+            // 首先将RGB转换到XYZ颜色空间
+            let R = r / 255;
+            let G = g / 255;
+            let B = b / 255;
+            
+            R = (R > 0.04045) ? Math.pow((R + 0.055) / 1.055, 2.4) : R / 12.92;
+            G = (G > 0.04045) ? Math.pow((G + 0.055) / 1.055, 2.4) : G / 12.92;
+            B = (B > 0.04045) ? Math.pow((B + 0.055) / 1.055, 2.4) : B / 12.92;
+            
+            // 使用D65标准光源
+            let X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
+            let Y = R * 0.2126729 + G * 0.7151522 + B * 0.0721750;
+            let Z = R * 0.0193339 + G * 0.1191920 + B * 0.9503041;
+            
+            // 参考白点
+            const refX = 0.95047;
+            const refY = 1.00000;
+            const refZ = 1.08883;
+            
+            X = X / refX;
+            Y = Y / refY;
+            Z = Z / refZ;
+            
+            X = (X > 0.008856) ? Math.pow(X, 1/3) : (7.787 * X) + 16/116;
+            Y = (Y > 0.008856) ? Math.pow(Y, 1/3) : (7.787 * Y) + 16/116;
+            Z = (Z > 0.008856) ? Math.pow(Z, 1/3) : (7.787 * Z) + 16/116;
+            
+            // 计算Lab值
+            const L = (116 * Y) - 16;
+            const a = 500 * (X - Y);
+            const b = 200 * (Y - Z);
+            
+            return { l: L, a: a, b: b };
+        }
+        
+        // 重置颜色选择
+        resetColorsBtn.addEventListener('click', () => {
+            // 重置为默认颜色
+            selectedColor1 = { r: 52, g: 152, b: 219 };
+            selectedColor2 = { r: 231, g: 76, b: 60 };
+            
+            updateColorDisplay(1, selectedColor1);
+            updateColorDisplay(2, selectedColor2);
+            
+            // 重置色差结果
+            differenceValue.textContent = '0.0';
+            differenceText.textContent = '未开始对比';
+            differenceText.className = 'difference-text';
+            
+            // 如果已拍照，重置选择步骤
+            if (photoTaken) {
+                colorSelectionStep = 0;
+                cameraStatus.className = 'status status-warning';
+                cameraStatus.innerHTML = '<i class="fas fa-mouse-pointer"></i> 颜色已重置，请点击照片选择两种颜色';
+            }
+        });
+        
+        // 预设颜色点击事件
+        sampleColors.forEach(sample => {
+            sample.addEventListener('click', () => {
+                const hexColor = sample.getAttribute('data-color');
+                const rgbColor = hexToRgb(hexColor);
+                
+                if (colorSelectionStep === 0 || colorSelectionStep === 1) {
+                    selectedColor1 = rgbColor;
+                    updateColorDisplay(1, rgbColor);
+                    colorSelectionStep = 1;
+                } else {
+                    selectedColor2 = rgbColor;
+                    updateColorDisplay(2, rgbColor);
+                    colorSelectionStep = 2;
+                }
+                
+                // 更新状态
+                if (photoTaken) {
+                    cameraStatus.className = 'status status-success';
+                    cameraStatus.innerHTML = colorSelectionStep === 2 
+                        ? '<i class="fas fa-check-circle"></i> 已选择颜色2，点击"对比颜色"按钮进行色差分析'
+                        : '<i class="fas fa-mouse-pointer"></i> 已选择颜色1，请点击照片或选择第二个颜色';
+                }
+            });
+        });
+        
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            // 更新颜色显示
+            updateColorDisplay(1, selectedColor1);
+            updateColorDisplay(2, selectedColor2);
+            
+            // 检查是否支持媒体设备
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                cameraStatus.className = 'status status-error';
+                cameraStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 您的浏览器不支持摄像头访问功能';
+                startCameraBtn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
